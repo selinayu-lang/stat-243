@@ -96,6 +96,7 @@ def get_all_commits(owner: str, repo: str, max_pages: int = 10) -> pd.DataFrame:
     max_pages(int, default=10): number of pages to fetch, each page has up to 100 commits
 
     Returns a DataFrame with all the commits collected.
+    
     """
     all_commits = []
     for page in range(1, max_pages + 1):
@@ -118,3 +119,4 @@ def get_all_commits(owner: str, repo: str, max_pages: int = 10) -> pd.DataFrame:
             })
 
     return pd.DataFrame(all_commits)
+
