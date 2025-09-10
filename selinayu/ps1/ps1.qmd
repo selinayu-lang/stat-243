@@ -1,0 +1,154 @@
+---
+title: "Problem Set 1"
+author: "Selina Yu"
+date: "Sep 10, 2025"
+format: pdf
+jupyter: python3
+---
+
+# Problem 1
+
+Memory and disk storage serve different purposes in a computer system. Memory is fast but limited and temporary, holding the data and instructions programs need while running; its contents are lost when power is turned off. Disk storage, by contrast, is much slower but provides far greater capacity and permanent persistence for files and applications. In data analysis, disk space tends to run out when saving or generating very large datasets, intermediate files, or model outputs, while memory is exhausted when attempting to load or process data that exceeds the available RAM, such as trying to read a dataset much larger than the computer’s memory.
+
+
+# Problem 2: File Sizes and Formats
+
+## 2a. 
+
+```{python}
+import numpy as np
+
+# Each float64 = 8 bytes
+# For 20 columns, each row = 20 * 8 = 160 bytes
+# To get ~16 MB: rows ≈ 16e6 / 160 ≈ 100,000
+rows = 100000
+x = np.random.randn(rows, 20)
+x.shape
+
+```
+Explanation:
+We calculated the number of rows needed by dividing 16 MB ≈ 16 million bytes by the size of each row. This gives around 100,000 rows.
+
+## 2b. 
+
+```{python}
+import pandas as pd
+import os
+
+# Round numbers to 12 decimal places
+x = x.round(decimals=12)
+
+# Save to CSV
+pd.DataFrame(x).to_csv("x.csv", header=False, index=False)
+print("CSV size (MB):", os.path.getsize("x.csv")/1e6)
+
+# Save to Pickle
+pd.DataFrame(x).to_pickle("x.pkl", compression=None)
+print("Pickle size (MB):", os.path.getsize("x.pkl")/1e6)
+
+```
+Explanation:
+CSV is a text format so every number is written as characters. Each value takes up around fifteen to twenty characters once you count digits, decimal points, signs, commas, and line breaks. Pickle is different because it stores binary floats directly, with each one taking eight bytes. That is why the CSV file ends up roughly twice the size of the pickle file.
+
+## 2c.
+If we round to 4 decimals, each number becomes shorter (≈ 7–8 characters). This reduces the CSV size, but it is still larger than pickle because CSV has to store digits, commas, and line breaks as text. Pickle remains fixed at ~16 MB since it always stores binary values. So CSV will not become smaller than pickle.
+
+
+## 2d.
+
+Changing to “one number per row” removes commas but adds newlines. Since both commas and newline characters take one byte, the total size stays roughly unchanged
+
+## 2e.
+
+```{python}
+# Compare read_csv vs read_pickle
+%time df_csv = pd.read_csv("x.csv", header=None)
+%time df_pkl = pd.read_pickle("x.pkl")
+```
+Explanation: Pickle loads data faster since it works with binary numbers right away. CSV needs to parse text into numbers first, which slows it down. Sometimes the very first read can feel slower because of the operating system cache, but later reads are quicker.
+
+## 2f.
+```{python}
+# Read first 10,000 rows
+%time chunk1 = pd.read_csv("x.csv", nrows=10000, header=None)
+
+# Read 10,000 rows from the middle
+%time chunk_mid = pd.read_csv("x.csv", skiprows=50000, nrows=10000, header=None)
+
+```
+Explanation: Reading with skiprows does not save time because pandas still needs to process earlier rows before it can move forward. It cannot jump straight to the middle of the file. This means that reading a block from the middle is not faster than reading all the rows up to that point.
+
+# Problem 3
+In writing the code for Problem 4, I tried to follow the good practices recommended in Unit 4. I added docstrings to each function to explain the inputs, outputs, and purpose. I broke the work into small functions that each do one clear task, which makes the code easier to understand and reuse. I used descriptive names for variables and functions, with snake_case style. I kept the formatting clean with consistent spaces and indentation. I also ran ruff to check the style and fixed small issues. For the API requests, I added error handling so the program will not fail silently. The only thing I did not do was write unit tests, since that will come later. I also think the line length limit is a bit strict, and sometimes I use slightly longer lines if it improves clarity.
+
+# Problem 4
+
+## 4a.
+
+```{python}
+import inspect
+import ps1_Q4_Module as p4
+
+print(inspect.getsource(p4.get_commits))
+
+df_commits = p4.get_commits("numpy", "numpy")
+df_commits.head()
+```
+Explanation: The get_commits function talks to the GitHub API and asks for up to one hundred commits from a repository. It picks out fields like the SHA, author name and email, commit date, commit message, and committer login. These details are then returned in a data frame.
+
+## 4b
+```{python}
+print(inspect.getsource(p4.plot_commits_hist))
+
+# plot the histogram
+p4.plot_commits_hist(df_commits)
+
+```
+Explanation: The histogram shows how many commits each user has made. It gives a quick picture of which contributors are the most active in the repository.
+
+## 4c
+```{python}
+print(inspect.getsource(p4.get_top_committer))
+
+top_user = p4.get_top_committer("numpy", "numpy", verbose=True)
+top_user
+```
+Explanation: The get_top_committer function finds the user with the largest number of commits. It then pulls that person’s GitHub profile, such as their display name, the number of public repositories, and how many followers they have. If verbose is set to true it prints a short message, and if it is set to false it only returns the data object.
+
+## 4d
+All the GitHub API–related code is organized inside the ps1_Q4_Module.py file.
+In this .qmd file, we only display the functions using inspect.getsource() and show how to call them. This ensures the code is modular, reusable, and follows good practices.
+
+## 4e
+A environment.yml file is included in the repository.
+It specifies the packages used in this assignment:
+  - python=3.12
+  - jupyter
+  - numpy
+  - pandas
+  - matplotlib
+
+## 4f
+```{python}
+print(inspect.getsource(p4.get_all_commits))
+df_all = p4.get_all_commits("numpy", "numpy", max_pages=5)
+df_all.shape
+# transfer the date as datetime and plot
+df_all["date"] = pd.to_datetime(df_all["date"])
+df_all.set_index("date", inplace=True)
+
+# gets the monthly counts
+monthly_counts = df_all.resample("M").size()
+
+import matplotlib.pyplot as plt
+plt.figure(figsize=(8,5))
+monthly_counts.plot()
+plt.title("Commits over time (monthly)")
+plt.xlabel("Date")
+plt.ylabel("Number of commits")
+plt.tight_layout()
+plt.show()
+
+```
+
+Explanation: For 4f, pagination lets us request many pages of commit data instead of just one. In this case we fetched up to five hundred commits. We then resampled the commit dates by month and drew a time series plot. The chart shows how active the project has been at different points in time and gives a sense of its development history.

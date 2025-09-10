@@ -1,0 +1,10 @@
+name: stat243
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - jupyter
+  - numpy
+  - pandas
+  - matplotlib
+prefix: /opt/anaconda3/envs/stat243

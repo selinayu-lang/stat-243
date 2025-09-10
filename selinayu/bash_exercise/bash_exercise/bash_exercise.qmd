@@ -1,0 +1,151 @@
+---
+title: "STAT 243 – Bash Exercises"
+author: "Selina Yu"
+date: "September 8, 2025"
+format: pdf
+execute:
+  echo: true
+  warning: false
+  error: true
+---
+```{bash}
+# Ex1
+### Use `which` to find python3 path. 
+
+
+mypython=$(which python3)
+echo "mypython=$mypython"
+
+# Ex2
+### Combine $USER and hostname
+
+user_machine="$USER@$(hostname)"
+echo $user_machine
+
+
+# Ex3
+### Use mkdir -p with brace expansion.
+
+rm -rf temp
+mkdir -p temp/proj{1,2,3}/{code,data}
+tree temp || find temp -print
+
+
+# Ex4
+### Create a demo file and count lines with wc -l
+
+printf "line1\nline2\nline3\nline4\nline5\n" > demo.txt
+wc -l demo.txt
+
+
+# Ex5
+### First three lines with head, only third line with sed.
+
+head -n 3 demo.txt
+sed -n '3p' demo.txt
+
+
+
+
+# Ex6
+### Save third line into new file.
+
+sed -n '3p' demo.txt > third_line.txt
+cat third_line.txt
+
+
+# Ex7
+### Append fifth line with >>
+sed -n '5p' demo.txt >> third_line.txt
+nl -ba third_line.txt
+
+
+# Ex8
+### Grep rows containing "Australia"
+
+cat > cpds.csv <<EOF
+country,year,value
+Australia,2001,10
+New Zealand,2001,7
+Australia,2002,11
+Canada,2001,9
+EOF
+
+grep 'Australia' cpds.csv > cpds_australia.csv
+cat cpds_australia.csv
+
+
+
+# Ex9
+### grep -v ',' excludes lines with commas.
+
+grep -v ',' demo.txt
+
+
+
+# Ex10
+### Loop to create files with "blah"
+ 
+
+for i in 1 2 3; do
+  echo "blah" > file${i}.txt
+done
+ls file*.txt
+
+
+
+# Ex11
+### Prepend using a temp file
+
+for i in 1 2 3; do
+  { echo $i; cat file${i}.txt; } > tmp && mv tmp file${i}.txt
+done
+cat file1.txt
+
+# Ex12
+### Run Python script in background.
+
+bpy() {
+  local infile=$1
+  local outfile=$2
+  nohup $mypython $infile > $outfile 2>&1 &
+  echo "Started $infile -> $outfile"
+}
+
+printf "a=5\nprint(a)\n" > file.py
+bpy file.py file.out
+sleep 1
+cat file.out
+
+
+# Ex13
+### If no output file is given, append out
+
+bpy() {
+  local infile=$1
+  local outfile=${2:-${infile}out}
+  nohup $mypython $infile > $outfile 2>&1 &
+  echo "Started $infile -> $outfile"
+}
+
+rm -f file.pyout
+bpy file.py
+sleep 1
+cat file.pyout
+
+
+# Ex14
+### ps aux then sort by memory column.
+
+ps aux | head -n 1
+ps aux | sort -k4,4nr | head -n 5
+
+# Ex15
+### Remove "python" part from $mypython
+
+echo "mypython=$mypython"
+path_to_py="${mypython%python*}"
+echo "path_to_py=$path_to_py"
+dirname $mypython
+```
+
